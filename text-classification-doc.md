@@ -50,7 +50,7 @@ We’ll use a library called **pandas** to load our news articles from a CSV fil
 import pandas as pd
 
 # Load the CSV file into a "dataframe" (a fancy table)
-df = pd.read_csv('news_articles.csv')
+df = pd.read_csv('news_articles.csv') # Change this to your file
 
 # Show the first 5 rows to peek at our data
 df.head()
@@ -321,9 +321,9 @@ Let’s see what the vectorizer learned:
 # Get the vocabulary (list of words)
 feature_names = vectorizer.get_feature_names_out()
 
-# Print the first 10 words
-print("First 10 words in the vocabulary:")
-print(feature_names[:10])
+# Print the 10,000th - 10,020th words. 
+print("10,000th - 10,020th in the vocabulary:")
+print(feature_names[10000:10020])
 
 # Look at the first article’s counts
 print("\nWord counts for the first article:")
@@ -332,7 +332,7 @@ print(X[0].toarray())
 
 #### What’s Happening?
 - **`vectorizer.get_feature_names_out()`**: Gets the vocabulary as an array (e.g., ["ai", "and", "breakthrough", ...]).
-- **`feature_names[:10]`**: Shows the first 10 words—run this to see what’s there!
+- **`feature_names[:10]`**: Shows the 10,000th - 10,020th words — run this to see what’s there! We did these because the first words are likely just numbers it has found in the articles. Try changing the numbers to get a different range and explore the vocabulary.
 - **`X[0]`**: Grabs the first article’s row from the sparse matrix.
 - **`.toarray()`**: Turns it into a full array (not sparse) so we can see it—each number matches a word in `feature_names`.
 - **`print(X[0].toarray())`**: Shows something like `[2, 0, 1, ...]`—2 "ai"s, 0 "and"s, 1 "breakthrough," etc.
@@ -366,8 +366,8 @@ X_tfidf = tfidf_vectorizer.fit_transform(df['Text'])
 
 # Peek at the vocabulary
 tfidf_features = tfidf_vectorizer.get_feature_names_out()
-print("First 10 TF-IDF features:")
-print(tfidf_features[:10])
+print("10,000th - 10,020th in the vocabulary:")
+print(feature_names[10000:10020])
 
 # See the first article’s scores
 print("\nTF-IDF scores for the first article:")
@@ -394,7 +394,7 @@ Imagine studying for a quiz: you practice with some questions (training), then t
 - **Trains** on most of it (learns patterns).
 - **Tests** on the rest (proves it works on new stuff).
 
-This avoids **overfitting**—where the model memorizes the training data but flops on new articles.
+This avoids **overfitting**—where the model memorizes the training data but flops on new articles. Think of **overfitting** like a when you revise for a test by memorising the answers to past paper questions. This will cause you a problem if you get a question in your exam that you've not seen before!
 
 ### Step 1: Split the Data
 ```python
@@ -485,6 +485,7 @@ new_vector = vectorizer.transform(new_article)  # Use the same vocabulary
 new_pred = model.predict(new_vector)
 print("Predicted subtopic for new article:", new_pred[0])
 ```
+Try making up another article that's totally different and see how that compares! Does it perform well or not? Have a think about perhaps why?
 
 #### What’s Happening?
 - **`new_article = [...]`**: A list with one string—our pretend article.
@@ -581,6 +582,7 @@ print("Misclassified examples:")
 df_test = df.iloc[y_test.index]  # Match test rows
 df_test[mistakes][['Text', 'Subtopic']].head()
 ```
+- Note: It might be hard to read them now, as we have done preprocessing on the text, so it may not make much sense to human eyes!
 
 #### What’s Happening?
 - **`y_test != y_pred`**: True where predictions don’t match reality.
