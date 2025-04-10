@@ -425,207 +425,465 @@ Now we’ve got a practice set and a quiz set!
 
 ---
 
-## 6. 🤖 Train a Simple Model
+## Section 6: 🤖 Train a Simple Model
 
-### What You’ll Learn
-- How to use **Multinomial Naive Bayes**
-- What training and predicting mean
-- How to test it out
-
-### Why Multinomial Naive Bayes?
-It’s a simple, fast model perfect for beginners. It looks at word counts and guesses subtopics based on which words show up most with each one—like noticing "virus" often means "Public Health." Plus, we can peek at what it learns!
-
-### Step 1: Train the Model
-```python
-# Import the model
-from sklearn.naive_bayes import MultinomialNB
-
-# Create the model
-model = MultinomialNB()
-
-# Train it
-model.fit(X_train, y_train)  # Learn patterns from training data
-```
-
-#### What’s Happening?
-- **`from sklearn.naive_bayes import MultinomialNB`**: Imports the Multinomial Naive Bayes classifier.
-- **`model = MultinomialNB()`**: Sets up the model with default settings.
-- **`model.fit(X_train, y_train)`**:
-  - `.fit()`: Teaches the model by looking at `X_train` (word counts) and `y_train` (subtopics).
-  - It calculates probabilities—like "80% of articles with ‘ai’ are about AI."
-  - Stores what it learns inside `model`.
-
-### Step 2: Predict Subtopics
-```python
-# Predict subtopics for the test data
-y_pred = model.predict(X_test)  # Guess subtopics for X_test
-
-# Print the first 5 predictions
-print("First 5 predictions:", y_pred[:5])
-print("First 5 actual subtopics:", y_test[:5].values)
-```
-
-#### What’s Happening?
-- **`model.predict(X_test)`**:
-  - `.predict()`: Uses what the model learned to guess subtopics for `X_test`.
-  - Looks at each test article’s word counts and picks the most likely subtopic.
-- **`y_pred`**: An array of predicted subtopics (e.g., ["AI", "Mental Health", ...]).
-- **`y_pred[:5]`**: Shows the first 5 predictions.
-- **`y_test[:5].values`**: Shows the first 5 real subtopics to compare.
-
-### Step 3: Try a New Article
-```python
-# Make a fake article
-new_article = ["AI robots help doctors in hospitals"]
-
-# Turn it into numbers
-new_vector = vectorizer.transform(new_article)  # Use the same vocabulary
-
-# Predict its subtopic
-new_pred = model.predict(new_vector)
-print("Predicted subtopic for new article:", new_pred[0])
-```
-Try making up another article that's totally different and see how that compares! Does it perform well or not? Have a think about perhaps why?
-
-#### What’s Happening?
-- **`new_article = [...]`**: A list with one string—our pretend article.
-- **`vectorizer.transform(new_article)`**:
-  - `.transform()`: Turns the text into numbers using the vocabulary from before (no `.fit`—we’re not learning new words).
-  - Returns a sparse matrix matching `X`’s format.
-- **`model.predict(new_vector)`**: Guesses the subtopic.
-- **`new_pred[0]`**: Gets the prediction (it’s a one-item array).
-
-### 📘 Analogy
-The model’s like a detective: "I’ve seen ‘robots’ and ‘doctors’ together in AI articles before—this must be AI!"
+In this section, we’ll train two models—**Multinomial Naive Bayes** and **Logistic Regression**—to predict news article topics. Using two models lets us compare how different approaches tackle the same problem, giving you a deeper understanding of machine learning.
 
 ---
 
-## 7. 📊 Evaluate the Model
+### 6.1 Multinomial Naive Bayes
 
-### What You’ll Learn
-- How to check if the model’s good
-- What accuracy, confusion matrix, and reports mean
-- Where it messes up
+#### Why Use It?
 
-### Step 1: Accuracy
+Naive Bayes is like a **quick-thinking librarian** who sorts books based on word clues. It’s a probabilistic model, meaning it calculates the likelihood of a topic based on the words in the text. It assumes each word contributes **independently** to the topic (a simplification that’s not true for language but works well anyway!). It’s fast, simple, and great for text because it handles lots of words (features) efficiently.
+
+---
+
+#### Step 1: Import and Create the Model
+
 ```python
-# Import the tool
-from sklearn.metrics import accuracy_score
+# Import the Naive Bayes model from scikit-learn
+from sklearn.naive_bayes import MultinomialNB
 
-# Calculate accuracy
-accuracy = accuracy_score(y_test, y_pred)  # Compare real vs. predicted
-print(f"Accuracy: {accuracy:.2f}")  # Show it with 2 decimals
+# Create an instance of the model
+naive_bayes_model = MultinomialNB()
 ```
 
-#### What’s Happening?
-- **`from sklearn.metrics import accuracy_score`**: Imports a function to measure correctness.
-- **`accuracy_score(y_test, y_pred)`**: Counts how many predictions in `y_pred` match `y_test`, then divides by the total (e.g., 80/100 = 0.8).
-- **`f"Accuracy: {accuracy:.2f}"`**: Formats the number (e.g., 0.823 → "Accuracy: 0.82").
+- **What’s happening here?**
+    - `from sklearn.naive_bayes import MultinomialNB`: Imports the Multinomial Naive Bayes classifier from scikit-learn. "Multinomial" means it’s designed for count-based data, like word frequencies.
+    - `naive_bayes_model = MultinomialNB()`: Creates a new Naive Bayes model object with default settings. Think of this as setting up a blank slate ready to learn.
 
-### Step 2: Confusion Matrix
+---
+
+#### Step 2: Train the Model
+
 ```python
-# Import the tool
+# Train the model using our training data
+naive_bayes_model.fit(X_train, y_train)
+```
+
+- **Training the model:**
+    - `naive_bayes_model.fit(X_train, y_train)`: Trains the model using:
+        - `X_train`: The training feature matrix (word counts or TF-IDF scores).
+        - `y_train`: The training labels (topics).
+        - `.fit()` calculates probabilities like “How often does ‘tech’ appear in Technology articles?” and stores them in `naive_bayes_model`.
+
+---
+
+#### Step 3: Make Predictions
+
+```python
+# Predict topics for the test data
+naive_bayes_predictions = naive_bayes_model.predict(X_test)
+```
+
+- **Making predictions:**
+    - `naive_bayes_model.predict(X_test)`: Makes predictions on the test data:
+        - `X_test`: The test feature matrix.
+        - `.predict()` looks at each test article’s words, uses learned probabilities, and picks the most likely topic.
+    - `naive_bayes_predictions`: An array of predicted topics (e.g., `["AI", "Crypto", ...]`).
+
+---
+
+#### Quick Check: View Predictions
+
+```python
+print("First 5 Naive Bayes predictions:", naive_bayes_predictions[:5])
+print("First 5 actual topics:", y_test[:5].values)
+```
+
+This prints out predictions from the Naive Bayes model alongside the actual topics for comparison.
+
+---
+
+### 6.2 Logistic Regression
+
+#### Why Use It?
+
+Logistic Regression is like a **judge weighing evidence**. It assigns weights to each word, showing how much each one pushes the prediction toward a topic. It’s a linear model, meaning it combines these weights in a straight-line way to make decisions. It’s slower than Naive Bayes but can capture more nuanced patterns and is easy to interpret.
+
+---
+
+#### Step 1: Import and Create the Model
+
+```python
+# Import the Logistic Regression model from scikit-learn
+from sklearn.linear_model import LogisticRegression
+
+# Create an instance of the model with a high iteration limit
+logistic_regression_model = LogisticRegression(max_iter=1000)
+```
+
+- **What’s happening here?**
+    - `from sklearn.linear_model import LogisticRegression`: Imports the Logistic Regression classifier from scikit-learn’s linear model tools.
+    - `logistic_regression_model = LogisticRegression(max_iter=1000)`: Creates a new Logistic Regression model with:
+        - `max_iter=1000`: Sets the maximum number of iterations (steps) for learning. Text data has many features, so we give it extra time to settle on the best weights.
+
+---
+
+#### Step 2: Train the Model
+
+```python
+# Train the model using our training data
+logistic_regression_model.fit(X_train, y_train)
+```
+
+- **Training the model:**
+    - `logistic_regression_model.fit(X_train, y_train)`: Trains the model using:
+        - `X_train`: The training feature matrix.
+        - `y_train`: The training labels.
+        - `.fit()` adjusts weights for each word (e.g., “tech” might get a high positive weight for Technology) to best match the training data.
+
+---
+
+#### Step 3: Make Predictions
+
+```python
+# Predict topics for the test data
+logistic_regression_predictions = logistic_regression_model.predict(X_test)
+```
+
+- **Making predictions:**
+    - `logistic_regression_model.predict(X_test)`: Makes predictions on:
+        - `X_test`: The test feature matrix.
+        - `.predict()` multiplies each word’s TF-IDF score by its learned weight, sums them up, and picks the topic with the highest score.
+    - `logistic_regression_predictions`: An array of predicted topics.
+
+---
+
+#### Quick Check: View Predictions
+
+```python
+print("First 5 Logistic Regression predictions:", logistic_regression_predictions[:5])
+print("First 5 actual topics:", y_test[:5].values)
+```
+
+This prints out predictions from Logistic Regression alongside actual topics for comparison.
+
+---
+
+### Reflection Prompt 💡
+
+Run all code above and compare predictions from both models:
+
+- Do they look similar?
+- Why might they differ?
+
+Think about how each model works:
+
+- Naive Bayes assumes all words contribute independently.
+- Logistic Regression assigns weights that can capture more nuanced relationships between words and topics.
+
+---
+
+## Section 7: 📊 Evaluate the Models
+
+With two models trained, let’s evaluate their performance and dig deeper. We’ll check accuracy, detailed metrics, and even see where they’re overly confident but wrong. This helps us understand their strengths and weaknesses.
+
+---
+
+### 7.1 Accuracy and Classification Report
+
+#### Step 1: Import Evaluation Tools and Calculate Accuracy
+
+```python
+# Import tools to measure model performance
+from sklearn.metrics import accuracy_score, classification_report
+
+# Calculate how many predictions Naive Bayes got right compared to actual answers
+naive_bayes_accuracy = accuracy_score(y_test, naive_bayes_predictions)
+print(f"Naive Bayes Accuracy: {naive_bayes_accuracy:.4f}")
+
+# Calculate how many predictions Logistic Regression got right compared to actual answers
+logistic_regression_accuracy = accuracy_score(y_test, logistic_regression_predictions)
+print(f"Logistic Regression Accuracy: {logistic_regression_accuracy:.4f}")
+```
+
+- **What’s happening here?**
+    - `from sklearn.metrics import accuracy_score, classification_report`: Imports tools to measure performance.
+    - `accuracy_score(y_test, nb_pred)`: Compares `y_test` (actual topics) to `nb_pred` (predicted topics) and calculates the fraction of correct predictions (e.g., 80 correct out of 100 = 0.8).
+    - `.4f`: Formats the accuracy score to 4 decimal places (e.g., `0.8234`).
+    - The same process is repeated for Logistic Regression predictions (`lr_pred`).
+
+---
+
+#### Step 2: Pick the Better Model and Generate a Detailed Report
+
+```python
+# Determine which model performed better based on accuracy
+if logistic_regression_accuracy > naive_bayes_accuracy:
+    better_predictions = logistic_regression_predictions
+    better_model_name = "Logistic Regression"
+else:
+    better_predictions = naive_bayes_predictions
+    better_model_name = "Naive Bayes"
+
+# Show detailed performance breakdown for the better model
+print(f"\nDetailed Report for {better_model_name}:")
+print(classification_report(y_test, better_predictions))
+```
+
+- **What’s happening here?**
+    - `better_pred`: Chooses predictions from the model with higher accuracy.
+    - `classification_report(y_test, better_pred)`: Breaks down performance by topic:
+        - **Precision**: Fraction of predictions for a topic that are correct (e.g., 90% of “Technology” guesses were right).
+        - **Recall**: Fraction of actual topic instances correctly identified (e.g., found 80% of “Technology” articles).
+        - **F1-score**: Balances precision and recall (higher is better).
+
+---
+
+#### Reflection Prompt 💡
+
+- Which model has higher accuracy?
+- Does the detailed report show any topics where it struggles (low F1-scores)?
+- Why might that happen?
+
+---
+
+### 7.2 Confusion Matrix
+
+#### Step 1: Create and Plot the Confusion Matrix
+
+```python
+# Import tools for creating visualizations
 from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Make the matrix
-cm = confusion_matrix(y_test, y_pred)
+# Create a table showing correct and incorrect predictions
+confusion_matrix_table = confusion_matrix(y_test, better_predictions)
 
-# Plot it
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_)
-plt.title('Confusion Matrix')  # Title
-plt.xlabel('Predicted Subtopic')  # X-axis
-plt.ylabel('Actual Subtopic')  # Y-axis
+# Create a heatmap visualization of the confusion matrix
+plt.figure(figsize=(10, 8))  # Set figure size to make it easier to read
+sns.heatmap(
+    confusion_matrix_table,
+    annot=True,  # Display numbers in each cell
+    fmt='d',     # Use whole numbers (no decimals)
+    cmap='Blues',  # Use blue color gradient
+    xticklabels=sorted(y_test.unique()),  # Label x-axis with class names
+    yticklabels=sorted(y_test.unique())   # Label y-axis with class names
+)
+plt.title(f'Confusion Matrix for {better_model_name}')
+plt.xlabel('Predicted Topic')
+plt.ylabel('Actual Topic')
 plt.show()
 ```
 
-#### What’s Happening?
-- **`confusion_matrix(y_test, y_pred)`**: Builds a table:
-  - Rows: Real subtopics (from `y_test`).
-  - Columns: Predicted subtopics (from `y_pred`).
-  - Cells: How many articles (e.g., 15 "AI" articles predicted as "AI").
-- **`sns.heatmap(...)`**:
-  - `cm`: The matrix to plot.
-  - `annot=True`: Shows numbers in each cell.
-  - `fmt='d'`: Uses whole numbers (not decimals).
-  - `cmap='Blues'`: Colors cells blue—darker means bigger numbers.
-  - `xticklabels=model.classes_`: Labels columns with subtopics (e.g., "AI," "Cybersecurity").
-  - `yticklabels=model.classes_`: Labels rows the same way.
-- The diagonal (top-left to bottom-right) shows correct guesses—off-diagonal are mistakes.
-
-### Step 3: Classification Report
-```python
-# Import the tool
-from sklearn.metrics import classification_report
-
-# Print the report
-print(classification_report(y_test, y_pred))
-```
-
-#### What’s Happening?
-- **`classification_report(y_test, y_pred)`**: Gives a detailed breakdown:
-  - **Precision**: For each subtopic, how many predictions were right? (e.g., 0.9 = 90% of "AI" guesses were correct).
-  - **Recall**: How many real instances did we catch? (e.g., 0.8 = caught 80% of "AI" articles).
-  - **F1-score**: A mix of precision and recall—higher is better.
-  - **Support**: How many test articles per subtopic.
-
-### 📘 Plain English
-- **Precision**: "When I say ‘AI,’ how often am I right?"
-- **Recall**: "Did I find most of the ‘AI’ articles?"
-- **F1**: "How balanced are my guesses?"
-
-### Step 4: Spot Mistakes
-```python
-# Find misclassified articles
-mistakes = y_test != y_pred
-print("Misclassified examples:")
-df_test = df.iloc[y_test.index]  # Match test rows
-df_test[mistakes][['Text', 'Subtopic']].head()
-```
-- Note: It might be hard to read them now, as we have done preprocessing on the text, so it may not make much sense to human eyes!
-
-#### What’s Happening?
-- **`y_test != y_pred`**: True where predictions don’t match reality.
-- **`df.iloc[y_test.index]`**: Gets the original rows matching our test set.
-- **`df_test[mistakes]`**: Filters to just the wrong guesses.
-- **`[['Text', 'Subtopic']].head()`**: Shows the text and real subtopic for the first 5 mistakes.
-
-### 🧠 Reflection Prompt
-- Which subtopics does the model mix up? Why might that be? (Look at the confusion matrix or mistake examples—any word overlap?)
+- **What’s happening here?**
+    - `confusion_matrix(y_test, better_pred)`: Builds a table:
+        - Rows represent actual topics (`y_test`).
+        - Columns represent predicted topics (`better_pred`).
+        - Cells show how many articles fall into each category (e.g., 15 “Technology” articles predicted correctly).
+    - `sns.heatmap(...)`: Turns the table into a colorful grid:
+        - `annot=True`: Displays numbers in each cell.
+        - `fmt='d'`: Uses whole numbers in cells (e.g., `15`, not `15.0`).
+        - `cmap='Blues'`: Colors cells blue—darker shades represent larger numbers.
+        - `xticklabels`/`yticklabels`: Labels rows and columns with sorted topic names.
 
 ---
 
-## 8. 🔍 Interpret the Model
+#### Reflection Prompt 💡
 
-### What You’ll Learn
-- What the model learned
-- Which words tip it off for each subtopic
+- Which topics get confused most often (big numbers off the diagonal)?
+- Could similar words between topics explain this?
 
-### Step 1: Top Words
+---
+
+### 7.3 Model Confidence Analysis
+
+#### Step 1: Find Confident but Wrong Predictions
+
 ```python
-# Get vocabulary
-feature_names = vectorizer.get_feature_names_out()
+import numpy as np
 
-# Show top 10 words per subtopic
-for i, subtopic in enumerate(model.classes_):
-    probs = model.feature_log_prob_[i]  # Log probabilities for this subtopic
-    top_indices = probs.argsort()[-10:][::-1]  # Top 10 word indices
-    top_words = [feature_names[j] for j in top_indices]  # Match to words
-    print(f"Top words for {subtopic}: {', '.join(top_words)}")
+# Get prediction probabilities for the better performing model
+if better_model_name == "Logistic Regression":
+    prediction_probabilities = logistic_regression_model.predict_proba(X_test)
+    current_model = logistic_regression_model
+else:
+    prediction_probabilities = naive_bayes_model.predict_proba(X_test)
+    current_model = naive_bayes_model
+
+# Find indices where the model made incorrect predictions
+incorrect_indices = np.where(better_predictions != y_test)[0]
+
+# Store high-confidence mistakes
+high_confidence_errors = []
+
+# Check each wrong prediction
+for index in incorrect_indices:
+    predicted_topic = better_predictions[index]
+    actual_topic = y_test.iloc[index]
+    
+    # Find probability for the predicted class
+    predicted_class_index = np.where(current_model.classes_ == predicted_topic)[0][0]
+    prediction_confidence = prediction_probabilities[index, predicted_class_index]
+    
+    # Save if model was confident but wrong
+    if prediction_confidence > 0.8:
+        high_confidence_errors.append((index, actual_topic, predicted_topic, prediction_confidence))
+
+# Display up to 3 examples
+print("\nConfidently Wrong Predictions:")
+for example_number in range(min(3, len(high_confidence_errors))):
+    example_index, true_label, predicted_label, confidence = high_confidence_errors[example_number]
+    print(f"Article Preview: {df['Text'].iloc[example_index][:100]}...")
+    print(f"True Topic: {true_label}, Predicted: {predicted_label}, Confidence: {confidence:.2f}")
+
 ```
 
-#### What’s Happening?
-- **`model.classes_`**: List of subtopics (e.g., "AI," "Mental Health").
-- **`enumerate(...)`**: Loops with an index (`i`) and name (`subtopic`).
-- **`model.feature_log_prob_[i]`**: Gets log probabilities—higher means a word strongly hints at this subtopic.
-- **`.argsort()`**: Sorts from low to high (returns indices).
-- **`[-10:]`**: Takes the last 10 (highest).
-- **`[::-1]`**: Reverses to highest-first.
-- **`[feature_names[j] for j in ...]`**: Turns indices into words.
-- **`', '.join(...)`**: Makes a list like "ai, robot, tech."
+- **What’s happening here?**
+    - `predict_proba(X_test)`: Returns an array of probabilities for each topic per test article.
+        - Shape: `(n_samples, n_classes)` (e.g., `100 articles × 5 topics`).
+        - Each row sums to `1` (e.g., `[0.9, 0.05, 0.05]` for three topics).
+    - `np.where(better_pred != y_test)`: Finds indices where predictions don’t match actual topics.
+    - Loop through wrong predictions:
+        - **`pred_class`**: The predicted topic.
+        - **`true_class`**: The actual topic.
+        - **Confidence** (`pred_prob`): Probability assigned to the predicted topic.
+            - Keeps only high-confidence mistakes (`pred_prob &gt; 0.8`).
 
-### 🧠 Reflection Prompt
-- Do these words fit the subtopics? Any surprises? What might the model miss (like sarcasm or rare words)?
+---
+
+#### Reflection Prompt 💡
+
+- Why might the model be so confident but wrong?
+- Could overlapping words (e.g., “market” in Business and Economy) trick it?
+
+---
+
+### 7.4 Comparing Models
+
+#### Step 1: Compare Accuracies Directly
+
+```python
+print(f"Naive Bayes Accuracy: {naive_bayes_accuracy:.4f}")
+print(f"Logistic Regression Accuracy: {logistic_regression_accuracy:.4f}")
+```
+
+---
+
+#### Discussion 💬
+
+- **Naive Bayes**: Fast and assumes words are independent. If “tech” and “innovation” often appear together, it might miss that connection but is great for quick results.
+- **Logistic Regression**: Slower but learns weights that can capture subtle relationships (e.g., “tech” + “innovation” might strongly suggest Technology).
+- **Why the Difference?** If Logistic Regression wins, it might better handle word overlaps. If Naive Bayes wins, simplicity might suit our data better.
+
+---
+
+#### Reflection Prompt 💡
+
+- Which model did better?
+- Hypothesize why—could it be data size, topic similarity, or something else?
+
+---
+
+## Section 8: 🔍 Interpret the Models
+
+Let’s peek inside both models to see what they’ve learned about topics. This helps us trust their predictions and spot areas to improve.
+
+---
+
+### 8.1 Interpreting Naive Bayes
+
+#### How It Works
+
+Naive Bayes uses **log probabilities** to measure how likely each word is for a topic. High probabilities mean a word is a strong clue for that topic.
+
+---
+
+#### Step 1: Get Vocabulary from Vectorizer
+
+```python
+# Get the list of words (vocabulary) from the TF-IDF vectorizer
+feature_names = vectorizer.get_feature_names_out()
+```
+
+- **What’s happening here?**
+    - `vectorizer.get_feature_names_out()`: Retrieves the list of words the model uses, like a dictionary of all terms it knows.
+
+---
+
+#### Step 2: Loop Through Topics and Find Top Words
+
+```python
+# Loop through each topic the model has learned
+for i, topic in enumerate(naive_bayes_model.classes_):
+    # Get log probabilities for all words in this topic
+    log_probs = naive_bayes_model.feature_log_prob_[i]
+    
+    # Find indices of the 10 words with highest probabilities
+    top_indices = np.argsort(log_probs)[-10:][::-1]
+    
+    # Convert indices to actual words
+    top_words = [feature_names[j] for j in top_indices]
+    
+    # Display results
+    print(f"Top words for {topic}: {', '.join(top_words)}")
+```
+
+- **What’s happening here?**
+    - `enumerate(naive_bayes_model.classes_)`: Loops through topics, keeping track of their index (`i`) and name (`topic`).
+    - `feature_log_prob_[i]`: Array of log probabilities for each word in the current topic.
+    - `np.argsort(log_probs)[-10:][::-1]`:
+
+1. Sorts word indices by probability (low to high).
+2. Takes the last 10 indices (highest probabilities).
+3. Reverses them to show most important words first.
+    - `[feature_names[j] for j in ...]`: Maps numerical indices back to actual words (e.g., index 42 → "technology").
+
+---
+
+### 8.2 Interpreting Logistic Regression
+
+#### How It Works
+
+Logistic Regression uses **coefficients (weights)** to show each word’s importance. Positive weights mean a word strongly suggests that topic; negative weights push away from it.
+
+---
+
+#### Step-by-Step Interpretation
+
+```python
+# Loop through each topic the model has learned
+for i, topic in enumerate(logistic_regression_model.classes_):
+    # Get coefficients (weights) for all words in this topic
+    coefficients = logistic_regression_model.coef_[i]
+    
+    # Find indices of the 10 words with strongest positive weights
+    top_indices = np.argsort(coefficients)[-10:][::-1]
+    
+    # Convert indices to actual words
+    top_words = [feature_names[j] for j in top_indices]
+    
+    # Display results
+    print(f"Top words for {topic}: {', '.join(top_words)}")
+```
+
+- **What’s happening here?**
+    - `logistic_regression_model.coef_[i]`: Array of weights for each word in the current topic.
+        - *Example*: A weight of +2.5 for "tech" in Technology means the word strongly indicates this topic.
+    - `np.argsort(coefficients)[-10:][::-1]`:
+
+1. Sorts word indices by weight (low to high).
+2. Takes the last 10 indices (highest positive weights).
+3. Reverses them to show most influential words first.
+    - `feature_names[j]`: Converts numerical indices to human-readable words.
+
+---
+
+### Reflection Prompt 💡
+
+Compare the top words for both models:
+
+1. **Are they similar?**
+2. **Do they match your intuition** about each topic?
+3. **What differences stand out?**
+
+*Example*:
+
+- Naive Bayes might prioritize common words like "new" or "report".
+- Logistic Regression could highlight more specific terms like "blockchain" or "quantum".
 
 ---
 
