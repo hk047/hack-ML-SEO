@@ -887,126 +887,375 @@ Compare the top words for both models:
 
 ---
 
-## 9. 🤖 Optional Advanced Section: DistilBERT
+## 9. 🤖 Neural Networks
 
-### What You’ll Learn
-- How a powerful model like DistilBERT works
-- How to fine-tune it for subtopics
+Neural networks might sound like something out of a robot movie, but they’re really just a cool way for computers to learn from data—like how you figure out patterns in a game after playing it a few times. Don’t stress about the fancy terms; we’ll make them as easy as pie with analogies and a hands-on approach.
 
-### Step 1: Install Stuff
+### What You’ll Do
+
+- Use an **MLP Classifier** to classify news topics (e.g., "Sports" or "Tech").
+- Learn what hidden layers and activation functions are with fun analogies.
+- Build your own neural network with Keras and tweak it.
+- Compare it to other models you’ve tried (if you have any).
+- Experiment and write down what you discover.
+
+---
+
+### Step 1: Try a Simple MLP Classifier
+
+Let’s kick off with the **MLP Classifier** from scikit-learn. Think of it like a pre-built LEGO set—you can snap it together and start playing without designing every piece yourself.
+
+#### Code Block 1: Preparing the Data
+
+First, we need to prepare the data so the neural network can understand it. Computers don’t understand words—they need numbers!
+
 ```python
-!pip install transformers datasets --quiet
-```
-
-#### What’s Happening?
-- **`!pip install ...`**: Installs two libraries in Colab:
-  - `transformers`: For pre-trained models like DistilBERT.
-  - `datasets`: For handling data easily.
-- **`--quiet`**: Keeps the output short.
-
-### Step 2: Load Tools
-```python
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
-from datasets import Dataset
-import torch
-```
+from sklearn.model_selection import train_test_split
 
-#### What’s Happening?
-- **`AutoTokenizer`**: Turns text into tokens (word pieces) DistilBERT understands.
-- **`AutoModelForSequenceClassification`**: A pre-trained model for classifying text.
-- **`Trainer, TrainingArguments`**: Tools to train the model.
-- **`LabelEncoder`**: Turns subtopics into numbers (e.g., "AI" → 0).
-- **`Dataset`**: A format for our data.
-- **`torch`**: A library for deep learning math.
+# Combine 'Title' and 'Description' into one 'Text' column
+df['Text'] = df['Title'] + " " + df['Description']
 
-### Step 3: Prepare Data
-```python
-# Encode subtopics as numbers
+# Convert text into numbers using TF-IDF (like turning words into coordinates on a map)
+vectorizer = TfidfVectorizer(max_features=2000)
+X = vectorizer.fit_transform(df['Text']).toarray()
+
+# Convert topic labels (e.g., "Sports") into numbers
 label_encoder = LabelEncoder()
-df['label'] = label_encoder.fit_transform(df['Subtopic'])
+y = label_encoder.fit_transform(df['Topic'])
 
-# Make a Dataset
-dataset = Dataset.from_pandas(df[['Text', 'label']])
+# Split data into training (80%) and testing (20%)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 ```
 
-#### What’s Happening?
-- **`label_encoder.fit_transform(df['Subtopic'])`**: Turns subtopics into numbers (e.g., "AI" → 0, "Mental Health" → 1).
-- **`df['label']`**: Adds these numbers as a new column.
-- **`Dataset.from_pandas(...)`**: Converts our dataframe to a `Dataset` object with just "Text" and "label."
 
-### Step 4: Tokenize
+#### Explanation: What’s Happening?
+
+- **TF-IDF Vectorizer**: It turns words into numbers by measuring how important each word is in the text. For example, "goal" might get a higher score if it's unique to sports articles.
+- **LabelEncoder**: Converts categories like "Sports" or "Tech" into numeric labels (e.g., 0 for Sports, 1 for Tech).
+- **Train-Test Split**: Splits the data so the model can learn from one part (training) and be tested on another part (testing).
+
+---
+
+#### Code Block 2: Training the MLP Classifier
+
+Now let’s train our neural network using the prepared data.
+
 ```python
-tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import classification_report
 
-def tokenize(batch):
-    return tokenizer(batch['Text'], truncation=True, padding='max_length')
+# Create and train the MLP Classifier
+mlp = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', max_iter=10, random_state=42)
+mlp.fit(X_train, y_train)
 
-tokenized_dataset = dataset.map(tokenize, batched=True)
+# Test it out by predicting topics for the test set
+y_pred = mlp.predict(X_test)
+
+# Print results
+print("MLP Classifier Results:")
+print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
 ```
 
-#### What’s Happening?
-- **`tokenizer = ...`**: Loads a tokenizer pre-trained for DistilBERT (lowercase version).
-- **`tokenize(batch)`**: A function that:
-  - `tokenizer(...)`: Splits text into tokens, cuts long text (`truncation`), and pads short text (`padding`).
-- **`dataset.map(...)`**: Applies `tokenize` to all rows in batches (faster!).
 
-### Step 5: Split
-```python
-split_dataset = tokenized_dataset.train_test_split(test_size=0.2)
+#### Explanation: What’s Going On?
+
+- **Hidden Layer (64)**: Think of this as a team of 64 detectives inside the network. Each one is looking for patterns in your news articles.
+- **Activation (‘relu’)**: A rule that decides if those detectives should shout out their findings. We’ll explain this with a light switch analogy later!
+- **Max Iterations (10)**: The network gets 10 rounds to practice and improve its guesses.
+- **fit()**: This is where the network learns from training data.
+- **predict()**: This is where it guesses topics for new data.
+
+---
+
+#### Try This:
+
+Run the code and look at the accuracy in the report. Compare it to other models you’ve tried before (like logistic regression). Write down your observations in a markdown cell:
+
+```markdown
+MLP Accuracy: 0.82  
+Compared to Logistic Regression (0.75): It’s better! Maybe the MLP is smarter at finding patterns.
 ```
 
-#### What’s Happening?
-- **`train_test_split(test_size=0.2)`**: Splits into 80% train, 20% test—like before, but for this format.
+---
 
-### Step 6: Load Model
-```python
-model = AutoModelForSequenceClassification.from_pretrained('distilbert-base-uncased', num_labels=len(label_encoder.classes_))
+### Step 2: What’s Inside a Neural Network?
+
+Now that you’ve seen a neural network work, let’s peek under the hood. Don’t worry—it’s not as complicated as it sounds. Let’s use analogies to make it click.
+
+#### Picture This: A Team Solving a Mystery
+
+Imagine a group of friends trying to figure out the topic of a news article:
+
+1. **Input Layer**: These friends grab raw info—like words in the article ("goal," "tech," "stocks").
+2. **Hidden Layers**: These are detectives who look for clues ("goal" might mean Sports). They pass their findings to others.
+3. **Output Layer**: The leader decides, “Yep, this is Sports!” based on what the detectives found.
+
+In computer terms:
+
+- Each “friend” is called a neuron.
+- Neurons are connected in layers.
+- Each neuron processes info and passes it along until an answer pops out.
+
+---
+
+#### Hidden Layers: The Detectives
+
+Hidden layers are where magic happens! Think of them as teams of detectives:
+
+- Each detective checks for something specific—like if “goal” or “player” appears often.
+- With 64 detectives (like in our MLP), they can spot tons of tiny clues.
+- Adding more hidden layers means they can look for bigger patterns—like phrases or ideas.
+
+
+#### Real-Life Example:
+
+If an article says “scored a goal,” one detective might notice “goal,” while another connects “scored” to guess it’s Sports.
+
+Here are some examples of different hidden layer configurations:
+
+**Single Layer (64 Neurons)**
+
+```python  
+mlp = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', ...)  
 ```
 
-#### What’s Happening?
-- **`from_pretrained(...)`**: Loads DistilBERT, pre-trained on tons of text.
-- **`num_labels=...`**: Sets it up for our number of subtopics.
+*Analogy*: One team of 64 detectives working together.
 
-### Step 7: Train
-```python
-training_args = TrainingArguments(
-    output_dir='./results',  # Where to save stuff
-    per_device_train_batch_size=16,  # How many articles per batch
-    evaluation_strategy='epoch',  # Check progress each epoch
-    num_train_epochs=3,  # Train for 3 rounds
-    logging_dir='./logs'  # Where to save logs
-)
+**Two Layers (128 → 64 Neurons)**
 
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=split_dataset['train'],
-    eval_dataset=split_dataset['test']
-)
-
-trainer.train()
+```python  
+mlp = MLPClassifier(hidden_layer_sizes=(128, 64), activation='relu', ...)  
 ```
 
-#### What’s Happening?
-- **`TrainingArguments(...)`**: Sets training rules (batch size, epochs, etc.).
-- **`Trainer(...)`**: Sets up the training process.
-- **`trainer.train()`**: Fine-tunes DistilBERT on our data.
+*Analogy*: Two teams: 128 detectives pass clues to 64 specialists.
 
-### Step 8: Evaluate
-```python
-predictions = trainer.predict(split_dataset['test'])
-preds = torch.argmax(torch.tensor(predictions.predictions), axis=1)
-print(classification_report(split_dataset['test']['label'], preds, target_names=label_encoder.classes_))
+**Deep Network (32 → 16 → 8 Neurons)**
+
+```python  
+mlp = MLPClassifier(hidden_layer_sizes=(32, 16, 8), activation='relu', ...)  
 ```
 
-#### What’s Happening?
-- **`trainer.predict(...)`**: Makes predictions on the test set.
-- **`torch.argmax(...)`**: Picks the most likely subtopic per article.
-- **`classification_report(...)`**: Shows how well it did.
+*Analogy*: A hierarchy: 32 → 16 → 8 detectives narrowing down clues.
 
-### 📘 Why It’s Cool
-DistilBERT already knows language from training on books, articles, and more—we’re just tweaking it for subtopics!
+**Overkill Layer (2000 Neurons)**
+
+```python  
+mlp = MLPClassifier(hidden_layer_sizes=(2000,), activation='relu', ...)  
+```
+
+*Analogy*: A massive team—might overcomplicate simple problems!
+
+---
+
+#### Activation Functions: The Light Switch
+
+Detectives need rules to decide whether their clue is worth sharing. That’s where activation functions come in!
+
+Here are some examples of different activation functions:
+
+**ReLU**
+
+```python  
+mlp = MLPClassifier(activation='relu', hidden_layer_sizes=(64,), ...)  
+```
+
+*Analogy*: A light switch that only turns on for strong clues.
+
+**Sigmoid**
+
+```python  
+mlp = MLPClassifier(activation='sigmoid', hidden_layer_sizes=(64,), ...)  
+```
+
+*Analogy*: A dimmer switch for "maybe" answers (e.g., 80% sure).
+
+**Tanh**
+
+```python  
+mlp = MLPClassifier(activation='tanh', hidden_layer_sizes=(64,), ...)  
+```
+
+*Analogy*: A mood meter (-1 to 1) for nuanced decisions.
+
+**Identity**
+
+```python  
+mlp = MLPClassifier(activation='identity', hidden_layer_sizes=(64,), ...)  
+```
+
+*Analogy*: No filter—raw numbers pass through unchanged.
+
+---
+
+#### Quick Check:
+
+Our MLP used ReLU because it lets detectives shout only when they’re sure—helping the network learn faster without confusion.
+
+---
+
+### Step 3: Build Your Own Neural Network with Keras
+
+Ready to be the master builder? Let’s use Keras to make a neural network from scratch. It’s like moving from a LEGO set to designing your own creation.
+
+#### Code Block 1: Prepare Labels for Keras
+
+```python  
+from tensorflow.keras.utils import to_categorical  
+
+# Convert labels to one-hot encoding (like turning "Sports" into [1,0,0])  
+y_train_onehot = to_categorical(y_train)  
+y_test_onehot = to_categorical(y_test)  
+```
+
+**What’s Happening?**
+`to_categorical` converts labels (e.g., 0,1,2) into a format Keras prefers. If you have 3 topics, "Sports" (label 0) becomes ``.
+
+---
+
+#### Code Block 2: Build the Network Architecture
+
+```python  
+from tensorflow.keras.models import Sequential  
+from tensorflow.keras.layers import Dense  
+
+model = Sequential()  
+model.add(Dense(64, activation='relu', input_shape=(X_train.shape[1],)))  # Detective layer  
+model.add(Dense(len(label_encoder.classes_), activation='softmax'))       # Decision layer  
+```
+
+**What’s Happening?**
+
+- **`Dense(64)`**: Adds 64 neurons (detectives) with ReLU activation.
+- **`input_shape=(X_train.shape,)`**: Tells the network how many word features to expect.
+- **`softmax`**: Final layer splits confidence like a pie (e.g., 70% Sports, 20% Tech).
+
+---
+
+#### Code Block 3: Configure Learning Parameters
+
+```python  
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])  
+```
+
+**What’s Happening?**
+
+- **`optimizer='adam'`**: A smart coach that adjusts learning speed.
+- **`loss='categorical_crossentropy'`**: Measures how wrong the guesses are.
+- **`metrics=['accuracy']`**: Tracks percentage of correct predictions.
+
+---
+
+#### Code Block 4: Train the Network
+
+```python  
+history = model.fit(X_train, y_train_onehot, epochs=10, batch_size=32, validation_split=0.2)  
+```
+
+**What’s Happening?**
+
+- **`epochs=10`**: Trains for 10 rounds.
+- **`batch_size=32`**: Processes 32 articles at a time.
+- **`validation_split=0.2`**: Uses 20% of training data to check progress.
+
+---
+
+#### Code Block 5: Evaluate Performance
+
+```python  
+test_loss, test_accuracy = model.evaluate(X_test, y_test_onehot)  
+print(f"Test Accuracy: {test_accuracy:.3f}")  
+```
+
+**Try This**: Compare this accuracy to your earlier MLP Classifier. Is Keras better? Worse? Why?
+
+---
+
+### Step 4: Visualize Learning Progress
+
+Let’s draw how your network improves over time.
+
+#### Code Block 6: Plot Accuracy Trends
+
+```python  
+import matplotlib.pyplot as plt  
+
+plt.plot(history.history['accuracy'], label='Training', color='blue')  
+plt.plot(history.history['val_accuracy'], label='Validation', color='orange')  
+plt.title('Learning Progress')  
+plt.xlabel('Epochs')  
+plt.ylabel('Accuracy')  
+plt.legend()  
+plt.show()  
+```
+
+**What to Look For**
+
+- **Blue Line**: Training accuracy (should rise steadily).
+- **Orange Line**: Validation accuracy (if flat, network isn’t generalizing).
+- **Gap Between Lines**: Large gaps mean overfitting (memorizing instead of learning).
+
+---
+
+### Step 5: Experiment Like Mad
+
+Tweak one thing at a time and observe changes! (Be patient though...)
+
+#### Code Block 7: More Detectives Experiment
+
+```python  
+model = Sequential()  
+model.add(Dense(128, activation='relu', input_shape=(X_train.shape[1],)))  # Double the detectives!  
+model.add(Dense(len(label_encoder.classes_), activation='softmax'))  
+```
+
+
+#### Code Block 8: Additional Layer Experiment
+
+```python  
+model.add(Dense(32, activation='relu'))  # Add this line before the output layer  
+```
+
+
+#### Code Block 9: Try Sigmoid Activation
+
+```python  
+model.add(Dense(64, activation='sigmoid', input_shape=(X_train.shape[1],)))  
+```
+
+**Try This**
+After each tweak:
+
+1. Recompile (`model.compile(...)`)
+2. Retrain (`model.fit(...)`)
+3. Check if accuracy improves
+
+---
+
+### Step 6: Document Your Findings
+
+Keep a log of experiments in a markdown cell:
+
+```markdown  
+#### Report  
+
+**Experiment 1: 128 Neurons**  
+- **Change**: Increased detectives from 64 → 128  
+- **Result**: Accuracy 0.82 → 0.85  
+- **Why**: More detectives found subtle clues  
+
+**Experiment 2: Added Layer**  
+- **Change**: Added 32-neuron layer  
+- **Result**: Accuracy dropped to 0.78  
+- **Why**: Too many layers confused the network  
+```
+
+---
+
+### Why This Matters
+
+You’ve built a system that learns like a human brain! By tweaking layers/activations, you’re doing what engineers do to create AI for games, apps, and more. Keep experimenting – every failure teaches you something new! 🚀
 
 ---
 
