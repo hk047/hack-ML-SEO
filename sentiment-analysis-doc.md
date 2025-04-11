@@ -1,577 +1,541 @@
-# What is Sentiment Analysis?
+# Part 2: Sentiment Analysis with Machine Learning
 
-Sentiment analysis is about figuring out the mood or opinion in a piece of text—whether it's positive, negative, or neutral. It's essentially teaching a computer to be an emotion detector for written content, similar to how humans can read a sentence and get a feeling for whether it's happy, sad, angry, or neutral.
+Welcome back to the Nomura x SEO Hackathon! In Part 1, you built a machine learning model to classify news articles into subtopics like "AI" or "Mental Health" based on their titles and descriptions. Now, in Part 2, we’re diving into sentiment analysis—a way to uncover the mood or tone behind text. Imagine figuring out if a news article is cheerful, gloomy, or neutral just by analyzing its words. That’s what you’ll do here, and it’s a skill banks and companies use to understand customer feedback, track news trends, and more.
 
-### Understanding Sentiment Through Examples
+## What You’ll Learn
 
-Let's look at some examples to understand this better:
+- What sentiment analysis is and why it matters.
+- Real-world examples of sentiment analysis.
+- Our mission: analyzing news article sentiment by subtopic.
+- You’ll use three tools: TextBlob, Hugging Face Transformers, and VADER.
 
-- "The company's profits soared this quarter" → **Positive**
-- "The service was adequate but nothing special" → **Neutral**
-- "The economy is collapsing due to poor policies" → **Negative**
+---
 
-Sentiment analysis has numerous real-world applications that make it valuable beyond just an academic exercise. Companies analyze customer reviews and social media mentions to understand product reception. Financial analysts track news sentiment to inform investment decisions. Political campaigns monitor public opinion, and healthcare researchers analyze patient feedback to improve services.
+### What Is Sentiment Analysis?
 
-In our project, we'll use sentiment analysis to understand how news articles portray different subtopics, revealing potential patterns in media coverage that might not be immediately obvious to human readers.
+Sentiment analysis is like giving a computer a mood ring to read text. It figures out if the text is positive, negative, or neutral. For example:
 
-### Why Two Different Methods?
+**Positive**: "The company’s profits soared beyond expectations."
+**Negative**: "The economy is collapsing, and unemployment is rising."
+**Neutral**: "The meeting will take place tomorrow at 10 AM."
+Think of it as teaching the computer to spot the emotional vibe behind words—a bit like guessing how a friend feels from their message.
 
-We'll explore two different approaches to sentiment analysis:
+---
 
-1. **TextBlob** - A simple, intuitive library perfect for beginners
-2. **Hugging Face Transformers** - A more sophisticated approach using advanced AI models
+### Why It’s Cool
 
-Comparing these methods will give us a more comprehensive understanding of sentiment analysis techniques and their relative strengths and limitations for analyzing news content.
+Sentiment analysis is everywhere in the real world:
 
-## Preparing Our Data
+- **Customer Reviews**: Companies check if people love or hate their products.
+- **Social Media**: Brands track posts to see how people feel about them.
+- **Financial News**: Investors analyze news to predict market moves—like whether positive headlines might boost stocks.
+In this challenge, you’ll analyze news article descriptions to see which subtopics (like "AI" or "Mental Health") get more positive or negative coverage. This could help a bank understand public perception and make smarter decisions.
 
-Before diving into sentiment analysis, we need to prepare our data and understand what we're working with:
+---
+
+## Step 2: Load and Explore the Dataset
+
+### What You’ll Learn
+
+- How to load data with Python.
+- How to explore and visualize it.
+- Why data distribution matters.
+
+
+### Step 1: Load the Data
+
+We’ll use the same news article dataset from Part 1, with columns like "Title," "Description," and "Subtopic." Let’s load it using pandas.
 
 ```python
-# Import necessary libraries
+# Import pandas to handle tables of data
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Load our dataset of news articles
-# For this project, we'll assume the data is already processed and includes:
-# - Title (of news article)
-# - Description (text content) 
-# - Subtopic (category of news)
-df = pd.read_csv('news_articles.csv')
+# Load the CSV file into a dataframe (like a spreadsheet)
+df = pd.read_csv('news_articles.csv')  # Upload your file to Colab first!
 
-# Display the first few rows to understand our data
+# Show the first 5 rows to peek at the data
 df.head()
 ```
 
-This code loads our dataset of news articles using pandas, a powerful data analysis library. Each row represents a single article with columns for the title, description text, and subtopic category. By examining the first few rows, we can understand the structure of our data before proceeding with analysis[.
+**What’s Happening?**
 
-Let's also explore how our articles are distributed across different subtopics:
+- **`import pandas as pd`**: Brings in pandas and calls it "pd" for short.
+- **`pd.read_csv('news_articles.csv')`**: Reads the file into a dataframe—a table where each row is an article.
+- **`df.head()`**: Displays the first 5 rows. Look at the "Description" column—that’s our focus for sentiment.
+
+---
+
+### Step 2: Explore the Data
+
+Let’s check how many articles each subtopic has to spot any imbalances.
 
 ```python
-# Count articles by subtopic and visualize the distribution
+# Count articles per subtopic
 subtopic_counts = df['Subtopic'].value_counts()
 
-# Create a bar chart
-plt.figure(figsize=(10, 6))
-sns.barplot(x=subtopic_counts.values, y=subtopic_counts.index)
-plt.title('Number of Articles per Subtopic')
-plt.xlabel('Number of Articles')
-plt.ylabel('Subtopic')
-plt.show()
-
-# Print the actual counts
-print("Number of articles per subtopic:")
+# Print the counts
+print("Articles per Subtopic:")
 print(subtopic_counts)
 ```
 
-Understanding the distribution of articles across subtopics is crucial for our analysis. If certain subtopics have very few articles, their sentiment averages might be less reliable. This visualization gives us context for interpreting our subsequent sentiment findings and helps identify potential sampling biases in our dataset.
+**What’s Happening?**
 
-## Option 1: Sentiment Analysis using TextBlob
+- **`df['Subtopic'].value_counts()`**: Counts articles per subtopic (e.g., "AI: 50, Mental Health: 30").
+- Are some subtopics more common? That could affect our results.
 
-TextBlob is a simple Python library that provides an easy-to-use interface for common natural language processing tasks, including sentiment analysis. It's a perfect starting point for beginners because of its simplicity and readability.
+---
 
-### Installing and Setting Up TextBlob
+### Step 3: Visualize the Distribution
 
-Let's start by installing and importing the library:
+A bar chart makes this easier to see—pictures beat numbers any day!
 
 ```python
-# Install TextBlob if you don't have it already
+# Import plotting libraries
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set a clean style for our plots
+sns.set_style("whitegrid")
+
+# Create a bar chart
+plt.figure(figsize=(10, 6))  # Size: 10 inches wide, 6 tall
+sns.barplot(x=subtopic_counts.index, y=subtopic_counts.values)
+plt.title('Number of Articles per Subtopic')
+plt.xlabel('Subtopic')
+plt.ylabel('Number of Articles')
+plt.xticks(rotation=45)  # Tilt labels to avoid overlap
+plt.show()
+```
+
+**What’s Happening?**
+
+- **`sns.barplot(...)`**: Draws bars with subtopics on the x-axis and counts on the y-axis.
+- Check the chart—do some subtopics dominate? That’s data imbalance to watch for.
+
+---
+
+### Reflection Prompt
+
+What issues might arise if one subtopic has way fewer articles?
+(Hint: Could it make sentiment less reliable? Why?)
+
+---
+
+## Step 3: Sentiment Analysis with TextBlob (Beginner-Friendly)
+
+### What You’ll Learn
+
+- How to use TextBlob for sentiment analysis.
+- What polarity and subjectivity mean.
+- How to apply it to our dataset.
+
+
+### Why TextBlob?
+
+TextBlob is a simple tool that’s great for beginners. It gives us two scores:
+
+- **Polarity**: From -1 (very negative) to 1 (very positive). 0 is neutral—like a mood scale.
+- **Subjectivity**: From 0 (factual) to 1 (opinion-based)—how much personal feeling is in the text.
+It’s like a quick emotional scanner!
+
+---
+
+### Step 1: Install and Import TextBlob
+
+Let’s set it up.
+
+```python
+# Install TextBlob
 !pip install textblob
 
 # Import TextBlob
 from textblob import TextBlob
-
-# Download necessary language data (needed only the first time)
-!python -m textblob.download_corpora
 ```
 
-This installation process gives us access to the TextBlob library and downloads the necessary language data that TextBlob needs for its analysis. The download_corpora command ensures we have all the linguistic resources required for accurate sentiment analysis.
+---
 
-### Trying TextBlob on Individual Examples
+### Step 2: Test TextBlob on Examples
 
-Before applying TextBlob to our entire dataset, let's test it on some individual sentences to understand how it works:
+Let’s try it on some sentences.
 
 ```python
-# Try TextBlob on a single sentence
-test_sentence = "The market is doing terribly today."
-blob = TextBlob(test_sentence)
-
-# Get sentiment scores
-polarity = blob.sentiment.polarity
-subjectivity = blob.sentiment.subjectivity
-
-print(f"Text: '{test_sentence}'")
-print(f"Polarity: {polarity}")  # Range: -1 (very negative) to +1 (very positive)
-print(f"Subjectivity: {subjectivity}")  # Range: 0 (very factual) to 1 (very opinionated)
-
-# Try a few more examples to better understand the scoring
-examples = [
-    "The company reported amazing quarterly results, exceeding all expectations.",
-    "The weather today is neither good nor bad.",
-    "The new regulations have devastated small businesses across the country."
+# Example sentences
+sentences = [
+    "The company's profits soared beyond expectations.",  # Positive
+    "The economy is collapsing, and unemployment is rising.",  # Negative
+    "The meeting will take place tomorrow at 10 AM."  # Neutral
 ]
 
-for example in examples:
-    sentiment = TextBlob(example).sentiment
-    print(f"\nText: '{example}'")
-    print(f"Polarity: {sentiment.polarity}")
-    print(f"Subjectivity: {sentiment.subjectivity}")
+# Analyze each sentence
+for sentence in sentences:
+    blob = TextBlob(sentence)
+    print(f"Sentence: {sentence}")
+    print(f"Polarity: {blob.sentiment.polarity}, Subjectivity: {blob.sentiment.subjectivity}\n")
 ```
 
-This code demonstrates how TextBlob analyzes sentiment by breaking down two key metrics:
+**What’s Happening?**
 
-1. **Polarity**: A float value ranging from -1 (very negative) to +1 (very positive), with 0 representing neutral sentiment. In our first example, "The market is doing terribly today," we expect a negative score because "terribly" carries negative connotation.
-2. **Subjectivity**: A float value ranging from 0 (very objective/factual) to 1 (very subjective/opinionated). This helps distinguish between objective statements of fact and subjective expressions of opinion or emotion.
+- **`TextBlob(sentence)`**: Turns the sentence into a TextBlob object.
+- **`blob.sentiment.polarity`**: Gets the polarity score (-1 to 1).
+- Do the scores match the moods you’d expect?
 
-By testing multiple examples with varying sentiments, we can build intuition about how TextBlob assigns scores to different types of sentences. This "peek under the hood" helps us understand what the model is doing before we apply it to thousands of articles, similar to checking that a tool works properly before using it for a large project.
+---
 
-### Applying TextBlob to Our News Articles
+### Step 3: Apply TextBlob to the Dataset
 
-Now that we understand how TextBlob works, let's apply it to all the articles in our dataset:
+Now, let’s analyze the "Description" column.
 
 ```python
-# Apply sentiment analysis to each article using TextBlob
-# We'll use the Description column which contains the article content
-df['Sentiment_Polarity'] = df['Description'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
-df['Sentiment_Subjectivity'] = df['Description'].apply(lambda x: TextBlob(str(x)).sentiment.subjectivity)
+# Function to get polarity
+def get_textblob_polarity(text):
+    return TextBlob(text).sentiment.polarity
 
-# Look at the results
-df[['Description', 'Sentiment_Polarity', 'Sentiment_Subjectivity']].head()
+# Add a new column with polarity scores
+df['TextBlob_Polarity'] = df['Description'].apply(get_textblob_polarity)
+
+# Show the first few rows
+df[['Description', 'TextBlob_Polarity']].head()
 ```
 
-In this code, we're using pandas' `.apply()` function to run TextBlob analysis on every article description in our dataset. The lambda function creates a TextBlob object for each text and extracts the polarity and subjectivity scores, which we store in new columns called `Sentiment_Polarity` and `Sentiment_Subjectivity`.
+**What’s Happening?**
 
-This is a critical step because it transforms our raw text data into quantitative measures that we can analyze statistically. Adding these sentiment scores opens the door to investigating questions like:
+- **`get_textblob_polarity(text)`**: A function that returns the polarity score for a given text.
+- **`df['Description'].apply(get_textblob_polarity)`**: Applies this function to each description in the dataframe.
 
-- Which subtopics tend to have more negative coverage?
-- Are economic news articles more negative than technology news?
-- Which subtopics get the most emotional (subjective) coverage?
+---
 
-Let's visualize the distribution of these sentiment scores:
+### Challenge Spot
 
-```python
-# Get basic statistics about our sentiment scores
-sentiment_stats = df[['Sentiment_Polarity', 'Sentiment_Subjectivity']].describe()
-print(sentiment_stats)
+We stored polarity in "TextBlob_Polarity." What about subjectivity?
+Your Task: Add a column called "TextBlob_Subjectivity" with subjectivity scores.
 
-# Create histograms to see the distribution
-plt.figure(figsize=(12, 5))
+(Hint: Define a function like `get_textblob_polarity` but for subjectivity, then apply it.)
 
-plt.subplot(1, 2, 1)
-sns.histplot(df['Sentiment_Polarity'], kde=True)
-plt.title('Distribution of Sentiment Polarity')
-plt.xlabel('Polarity (-1 = Negative, +1 = Positive)')
-plt.axvline(x=0, color='red', linestyle='--')  # Add a line at zero
+---
 
-plt.subplot(1, 2, 2)
-sns.histplot(df['Sentiment_Subjectivity'], kde=True)
-plt.title('Distribution of Sentiment Subjectivity')
-plt.xlabel('Subjectivity (0 = Factual, 1 = Opinionated)')
+### Reflection Prompt
 
-plt.tight_layout()
-plt.show()
-```
+Where might TextBlob fail?
+(Think about sarcasm—like "Great, another Monday!"—or complex phrases. Could it misread the mood? Why? Share your thoughts and demonstrate your understanding of the model!)
 
-These histograms reveal the overall sentiment landscape of our news articles. The polarity histogram shows how many articles fall into different sentiment ranges, while the subjectivity histogram shows how factual versus opinionated the articles tend to be.
+---
 
-### Reflecting on TextBlob's Limitations
+## Step 4: Sentiment Analysis with Hugging Face Transformers (Advanced)
 
-While TextBlob is straightforward to use, it has important limitations to consider:
+### What You’ll Learn
 
-- **Sarcasm Detection**: TextBlob struggles with sarcasm. For example, "Oh great, another market crash..." would likely be scored as positive (because of "great") when it clearly expresses negative sentiment.
-- **Context Understanding**: It doesn't always grasp context. "The stock plummeted 50% after the announcement" contains negative financial news, but TextBlob might miss this nuance if it doesn't recognize "plummeted" as strongly negative.
-- **Emotional Complexity**: Simple sentiment models like TextBlob have difficulty with complex emotions, mixed sentiments, or cultural references.
-
-🧠 **Reflection Prompt**: When might TextBlob struggle to understand the true tone of a sentence? Can you think of examples from news articles where sentiment might be misinterpreted?
-
-## Option 2: Sentiment Analysis using Hugging Face Transformers
-
-Now we'll explore a more sophisticated approach using transformer models from Hugging Face, which represent the current state-of-the-art in natural language processing.
-
-### Understanding Transformer Models
-
-Transformers are advanced AI models trained on massive amounts of text data that can understand language in a much more sophisticated way than simpler algorithms like TextBlob.
-
-Think of the difference this way:
-
-- If TextBlob is like a dictionary with feelings attached to words, transformers are like English teachers who can pick up on tone, context, and hidden meaning.
-- TextBlob looks at words somewhat independently, while transformers understand relationships between words and longer-range dependencies in a sentence.
+- How to use Transformers for sentiment analysis.
+- How it differs from TextBlob.
+- How to handle complex text.
 
 
-### Setting Up Hugging Face Transformers
+### Why Transformers?
 
-Let's install and configure the Hugging Face transformers library:
+Transformers are like AI superheroes. They use models like BERT to understand context—like spotting sarcasm—better than TextBlob.
+
+---
+
+### Step 1: Install and Import Transformers
+
+Let’s get it ready.
 
 ```python
-# Install transformers library if needed
+# Install transformers
 !pip install transformers
 
-# Import the pipeline from transformers
+# Import the sentiment analysis pipeline
 from transformers import pipeline
-
-# Load a pretrained sentiment analysis pipeline
-# This uses a model called "distilbert-base-uncased-finetuned-sst-2-english" by default
-sentiment_model = pipeline("sentiment-analysis")
 ```
 
-This code installs the `transformers` library and imports the `pipeline` function, which provides a simple interface to use complex pre-trained models. We create a `sentiment_model` using the "sentiment-analysis" pipeline, which automatically loads a pre-trained model specifically designed for sentiment analysis.
+---
 
-The default model is based on DistilBERT, which is a smaller, faster version of BERT (Bidirectional Encoder Representations from Transformers). This model was trained on a massive text dataset and then fine-tuned specifically for sentiment classification tasks.
+### Step 2: Set Up the Pipeline
 
-### Testing the Transformer Model
-
-Let's try this model on some examples:
+We’ll use the default pipeline.
 
 ```python
-# Try the model on a single example
-test_text = "The new technology is breaking boundaries."
-result = sentiment_model(test_text)
-print(f"Text: '{test_text}'")
-print(f"Result: {result}")
+# Create a sentiment analysis pipeline
+sentiment_pipeline = pipeline("sentiment-analysis")
+```
 
-# Compare with TextBlob on our previous examples
-examples = [
-    "The company reported amazing quarterly results, exceeding all expectations.",
-    "The weather today is neither good nor bad.",
-    "The new regulations have devastated small businesses across the country."
+---
+
+### Step 3: Test on Examples
+
+Let’s compare it to TextBlob.
+
+```python
+# Same example sentences
+sentences = [
+    "The company's profits soared beyond expectations.",
+    "The economy is collapsing, and unemployment is rising.",
+    "The meeting will take place tomorrow at 10 AM."
 ]
 
-# Try the model on a single example
-test_text = "The new technology is breaking boundaries."
-result = sentiment_model(test_text)
-print(f"Text: '{test_text}'")
-print(f"Result: {result}")
+# Analyze each sentence
+for sentence in sentences:
+    result = sentiment_pipeline(sentence)
+    print(f"Sentence: {sentence}")
+    print(f"Label: {result[^0]['label']}, Confidence: {result[^0]['score']:.2f}\n")
+```
 
-# Compare with TextBlob on our previous examples
-examples = [
-    "The company reported amazing quarterly results, exceeding all expectations.",
-    "The weather today is neither good nor bad.",
-    "The new regulations have devastated small businesses across the country."
+**What’s Happening?**
+
+- **`result['label']`**: Gets POSITIVE or NEGATIVE.
+- How do these differ from TextBlob?
+
+---
+
+### Step 4: Apply to the Dataset
+
+Let’s analyze a sample (Transformers are slow on big data).
+
+```python
+# Sample 100 articles
+sample_df = df.sample(100, random_state=42)
+
+# Function to get sentiment and score
+def get_transformer_sentiment(text):
+    result = sentiment_pipeline(text)[^0]
+    return result['label'], result['score']
+
+# Add columns
+sample_df['Transformer_Sentiment'], sample_df['Transformer_Score'] = zip(*sample_df['Description'].apply(get_transformer_sentiment))
+
+# Show results
+sample_df[['Description', 'Transformer_Sentiment', 'Transformer_Score']].head()
+```
+
+**What’s Happening?**
+
+- **`get_transformer_sentiment(text)`**: Returns the sentiment label and confidence score.
+- **`zip(*sample_df['Description'].apply(get_transformer_sentiment))`**: Unpacks the results into two columns.
+
+---
+
+### Extension Challenge
+
+Test the Transformer on tricky text like "Oh great, another Monday!"
+Your Task: Analyze two sarcastic or ambiguous sentences and note your observations in a markdown cell. This would be great to share later on and talk about.
+
+Try this sarcastic analysis on TextBlob and try to create a graph to show how they compare. It would be excellent to show this analysis and why you think it is happening.
+
+---
+
+## Step 5: Bonus: Sentiment Analysis with VADER
+
+### What You’ll Learn
+
+- How VADER handles punctuation, capitalization, and emphasis.
+- How it compares to TextBlob and Transformers.
+- How to add a new model to your analysis.
+
+
+### Why VADER?
+
+VADER (Valence Aware Dictionary and sEntiment Reasoner) is a rule-based tool designed for social media and short texts. It’s great at picking up on:
+
+- **Punctuation**: "Great!!!" vs. "Great."
+- **Capitalization**: "AWESOME" vs. "awesome"
+- **Degree Modifiers**: "very good" vs. "good"
+It’s like a detective for text emphasis!
+
+---
+
+### Step 1: Install and Import VADER
+
+Let’s set it up.
+
+```python
+# Install VADER
+!pip install vaderSentiment
+
+# Import VADER
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+# Create a VADER analyzer object
+vader_analyzer = SentimentIntensityAnalyzer()
+```
+
+---
+
+### Step 2: Test VADER on Examples
+
+Let’s see how it handles emphasis.
+
+```python
+# Test sentences
+vader_sentences = [
+    "The product is good.",
+    "The product is GOOD!",
+    "The product is very good!!",
+    "The product is terrible..."
 ]
 
-for example in examples:
-    # Get results from both models
-    hf_result = sentiment_model(example)[0]  # Hugging Face result
-    tb_polarity = TextBlob(example).sentiment.polarity  # TextBlob polarity
-    
-    print(f"\nText: '{example}'")
-    print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
-    print(f"TextBlob: Polarity = {tb_polarity:.4f}")
-    print(f"\nText: '{example}'")
-    print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
-    print(f"TextBlob: Polarity = {tb_polarity:.4f}")
+# Analyze each sentence
+for sentence in vader_sentences:
+    scores = vader_analyzer.polarity_scores(sentence)
+    print(f"Sentence: {sentence}")
+    print(f"Scores: {scores}\n")
 ```
 
-This code reveals how the Hugging Face model differs from TextBlob. The transformer model provides:
+**What’s Happening?**
 
-1. A categorical label ("POSITIVE" or "NEGATIVE")
-2. A confidence score (between 0 and 1) indicating how certain the model is about its prediction
+- **`polarity_scores`**: Returns a dictionary with:
+    - `pos`: Positive score (0 to 1)
+    - `neg`: Negative score (0 to 1)
+    - `neu`: Neutral score (0 to 1)
+    - `compound`: Overall score (-1 to 1)
+- Notice how "GOOD!" and "very good!!" get different scores than "good."
 
-This confidence score is particularly valuable as it helps us gauge the reliability of each prediction, something TextBlob doesn't provide.
+---
 
-Let's also test how the models handle a challenging case like sarcasm:
+### Step 3: Apply VADER to the Dataset
+
+Let’s add VADER to our sample.
 
 ```python
-# Try with a sarcastic sentence
-sarcastic_example = "Great, another market crash is exactly what we needed right now."
+# Function to get VADER compound score
+def get_vader_sentiment(text):
+    return vader_analyzer.polarity_scores(text)['compound']
 
-# TextBlob analysis
-tb_result = TextBlob(sarcastic_example).sentiment
-print(f"Text: '{sarcastic_example}'")
-print(f"TextBlob: Polarity = {tb_result.polarity:.4f}, Subjectivity = {tb_result.subjectivity:.4f}")
+# Add a new column
+sample_df['VADER_Sentiment'] = sample_df['Description'].apply(get_vader_sentiment)
 
-# Hugging Face analysis
-hf_result = sentiment_model(sarcastic_example)[0]
-print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
+# Show results
+sample_df[['Description', 'TextBlob_Polarity', 'Transformer_Sentiment', 'VADER_Sentiment']].head()
 ```
 
-This example demonstrates how the two models may respond differently to sarcasm. TextBlob typically gives a positive score for this sentence because it sees words like "great" and "exactly what we needed" as positive, without understanding the sarcastic context. The transformer model is often better at detecting that "another market crash" combined with "exactly what we needed" likely indicates sarcasm and negative sentiment.
+**What’s Happening?**
 
-### Applying the Transformer Model to Our Dataset
+- **`get_vader_sentiment(text)`**: Returns the compound score for a given text.
+- **`apply(get_vader_sentiment)`**: Applies this function to each description.
 
-Now let's apply the Hugging Face model to our dataset:
+---
+
+### Challenge Spot
+
+Your Task: Add VADER scores to the full dataset (`df`), not just the sample, and create a histogram of `VADER_Sentiment` scores.
+
+(Hint: Use `sns.histplot` like we did earlier for TextBlob.)
+
+---
+
+### Reflection Prompt
+
+How does VADER’s handling of emphasis change the results compared to TextBlob or Transformers?
+(Think about news headlines with exclamation points or all caps—could VADER catch something the others miss?)
+
+---
+
+## Step 6: Compare and Visualize the Results
+
+### What You’ll Learn
+
+- How to compare three models.
+- How to create clear visualizations.
+- Why models might disagree.
+
+
+### Step 1: Compare Scores
+
+Let’s compare all three in our sample.
 
 ```python
-# Apply the Hugging Face model to our dataset
-# Note: This will take longer than TextBlob because transformer models are more complex
+# Map Transformer labels to numbers
+sample_df['Transformer_Numerical'] = sample_df['Transformer_Sentiment'].map({'POSITIVE': 1, 'NEGATIVE': -1})
 
-# For demonstration, we'll use a smaller sample to save time
-sample_size = 100  # Adjust based on your computational resources
-df_sample = df.sample(sample_size, random_state=42)
-
-# Function to get sentiment label and score
-def get_hf_sentiment(text):
-    try:
-        result = sentiment_model(str(text))[0]
-        return result['label'], result['score']
-    except Exception as e:
-        print(f"Error processing text: {e}")
-        return "ERROR", 0.0
-
-# Apply to our sample
-df_sample['HF_Sentiment_Label'], df_sample['HF_Sentiment_Score'] = zip(*df_sample['Description'].apply(get_hf_sentiment))
-
-# Convert labels to numeric values for easier analysis (POSITIVE = 1, NEGATIVE = 0)
-df_sample['HF_Sentiment_Numeric'] = df_sample['HF_Sentiment_Label'].apply(lambda x: 1 if x == 'POSITIVE' else 0)
-
-# Look at the results
-df_sample[['Description', 'Sentiment_Polarity', 'HF_Sentiment_Label', 'HF_Sentiment_Score']].head()
+# Compare correlations
+comparison_df = sample_df[['TextBlob_Polarity', 'Transformer_Numerical', 'VADER_Sentiment']]
+correlation = comparison_df.corr()
+print("Correlation between models:")
+print(correlation)
 ```
 
-In this code, we've created a helper function `get_hf_sentiment` that processes each article with our transformer model and returns both the sentiment label and confidence score. We then apply this to each article in our sample dataset and store the results in new columns.
+**What’s Happening?**
 
-The transformer model analysis gives us an alternative perspective on our data's sentiment. Having results from two different models provides a more well-rounded view; when both models agree, we can be more confident in our assessment, and when they disagree, we have an opportunity to investigate why.
+- **`map({'POSITIVE': 1, 'NEGATIVE': -1})`**: Converts labels to numerical values for comparison.
+- **`corr()`**: Calculates how closely the models agree.
 
-🎁 **Bonus Idea**: Create a small test set of "tricky" sentences that contain sarcasm, metaphors, or industry jargon, and see how each model performs. Which one handles linguistic complexity better?
+---
 
-### Comparing the Two Models
+### Step 2: Improved Visualization
 
-Let's create a visualization to compare how the two models evaluate the same articles:
-
-```python
-# Create a scatter plot comparing TextBlob polarity vs. Hugging Face confidence
-plt.figure(figsize=(10, 6))
-sns.scatterplot(
-    x='Sentiment_Polarity',
-    y='HF_Sentiment_Score',
-    hue='HF_Sentiment_Label',
-    data=df_sample
-)
-
-plt.title('Comparison of TextBlob vs. Hugging Face Sentiment Analysis')
-plt.xlabel('TextBlob Polarity (-1 = Negative, +1 = Positive)')
-plt.ylabel('Hugging Face Confidence Score')
-plt.axvline(x=0, color='gray', linestyle='--')  # Add a vertical line at 0 polarity
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.show()
-
-# Calculate agreement percentage between the two models
-agreement = (
-    ((df_sample['Sentiment_Polarity'] > 0) & (df_sample['HF_Sentiment_Label'] == 'POSITIVE')) |
-    ((df_sample['Sentiment_Polarity'] < 0) & (df_sample['HF_Sentiment_Label'] == 'NEGATIVE'))
-).mean() * 100
-
-print(f"Agreement between TextBlob and Hugging Face: {agreement:.2f}%")
-```
-
-This visualization compares how the two sentiment analysis models rate the same articles. The x-axis shows TextBlob's polarity score (-1 to +1), while the y-axis shows the Hugging Face model's confidence score (0 to 1). Points are colored based on whether Hugging Face classified the article as positive or negative.
-
-Interesting patterns to look for include:
-
-- Points in the upper right quadrant: Both models agree the text is positive
-- Points in the lower left quadrant: Both models agree the text is negative
-- Points in the upper left or lower right: The models disagree
-
-The "agreement percentage" tells us how often the two methods reached the same sentiment classification (positive/negative), providing insight into model consistency.
-
-🧠 **Reflection Prompt**: If the two models disagree on an article's sentiment, which one would you trust more and why? What factors might influence your decision?
-
-## Analyze Sentiment by Subtopic
-
-Now we come to our main research question: Which subtopics are reported on with more positive or negative sentiment?
-
-### Analyzing TextBlob Sentiment by Subtopic
-
-Let's group our articles by subtopic and calculate the average sentiment for each:
+The original scatter plot was tricky to read, so let’s use a bar chart to compare average sentiment per subtopic across models.
 
 ```python
-# Group articles by subtopic and calculate average polarity
-avg_sentiment = df.groupby('Subtopic')['Sentiment_Polarity'].mean().sort_values()
-
-# Create a bar chart to visualize sentiment by subtopic
-plt.figure(figsize=(10, 6))
-sns.barplot(x=avg_sentiment.values, y=avg_sentiment.index, palette="coolwarm")
-plt.title("Average Sentiment by Subtopic")
-plt.xlabel("Average Sentiment Polarity (-1 = Negative, +1 = Positive)")
-plt.ylabel("Subtopic")
-plt.axvline(x=0, color='gray', linestyle='--')  # Add a vertical line at 0
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.show()
-
-# Print the actual values
-print("Average sentiment polarity by subtopic:")
-for subtopic, avg_pol in avg_sentiment.items():
-    print(f"{subtopic}: {avg_pol:.4f}")
-```
-
-This visualization ranks subtopics from most negative (bottom) to most positive (top) based on the average sentiment polarity of articles in each category. The color gradient from red to blue helps distinguish negative from positive sentiment, with the vertical line at 0 marking the boundary.
-
-This analysis transforms our sentiment scores into actionable insights, revealing patterns in how different topics are portrayed in the news. These patterns might reflect:
-
-- Inherent positive/negative aspects of certain topics
-- Media bias in reporting
-- Current events affecting particular topics during the period covered by our dataset
-
-
-### Understanding Distribution Within Subtopics
-
-Let's also look at the distribution of sentiment within each subtopic using box plots:
-
-```python
-# Create a box plot to show the distribution of sentiment within each subtopic
-plt.figure(figsize=(12, 8))
-sns.boxplot(x='Sentiment_Polarity', y='Subtopic', data=df, palette='coolwarm')
-plt.title("Distribution of Sentiment by Subtopic")
-plt.xlabel("Sentiment Polarity (-1 = Negative, +1 = Positive)")
-plt.ylabel("Subtopic")
-plt.axvline(x=0, color='gray', linestyle='--')
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.show()
-```
-
-Box plots provide a more nuanced view of the sentiment distribution within each subtopic:
-
-- The vertical line inside each box represents the median sentiment
-- The box represents the middle 50% of articles (25th to 75th percentile)
-- The "whiskers" extend to show the range of the data
-- Dots represent outliers (articles with unusually high or low sentiment)
-
-This visualization adds depth to our understanding by showing:
-
-- Which subtopics have wide variation in sentiment (large boxes)
-- Which have consistent sentiment across articles (small boxes)
-- Whether there are outliers that might be interesting to investigate further
-
-
-### Comparing Subtopic Sentiment Using Hugging Face
-
-Let's perform a similar analysis using our Hugging Face results:
-
-```python
-# For this to work, we need to have applied the Hugging Face model to our dataset
-# Group by subtopic and calculate percentage of positive articles
-hf_sentiment_by_subtopic = df_sample.groupby('Subtopic')['HF_Sentiment_Numeric'].mean().sort_values() * 100
-
-# Create a bar chart
-plt.figure(figsize=(10, 6))
-sns.barplot(x=hf_sentiment_by_subtopic.values, y=hf_sentiment_by_subtopic.index, palette="coolwarm")
-plt.title("Percentage of Positive Articles by Subtopic (Hugging Face)")
-plt.xlabel("Percentage of Articles Classified as Positive")
-plt.ylabel("Subtopic")
-plt.axvline(x=50, color='gray', linestyle='--')  # Add a vertical line at 50%
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.show()
-```
-
-This chart shows the percentage of articles classified as positive for each subtopic according to the Hugging Face model. Unlike TextBlob's polarity scores (-1 to +1), here we're showing percentages (0% to 100%), with the vertical line at 50% representing an equal number of positive and negative articles.
-
-🧠 **Reflection Prompt**: Were you surprised by which topics had the most positive or negative coverage? What factors might explain why certain topics tend to be reported more positively or negatively?
-
-## Visual Storytelling \& Interpretation
-
-Data visualization is about more than just making charts—it's about telling a compelling story with your data. Let's create some more sophisticated visualizations that help us interpret our sentiment analysis results.
-
-### Comparing TextBlob and Hugging Face Side by Side
-
-Let's create a chart that directly compares how the two models evaluate each subtopic:
-
-```python
-# Prepare data for comparison
-# Calculate average TextBlob polarity per subtopic for our sample
-tb_by_subtopic = df_sample.groupby('Subtopic')['Sentiment_Polarity'].mean()
-
-# Calculate percentage positive for Hugging Face per subtopic
-hf_by_subtopic = df_sample.groupby('Subtopic')['HF_Sentiment_Numeric'].mean()
-
-# Combine into a single dataframe for plotting
-comparison_df = pd.DataFrame({
-    'TextBlob': tb_by_subtopic,
-    'HuggingFace': hf_by_subtopic
-})
-
-# Convert Hugging Face scores from 0-1 to -1 to 1 for better comparison
-comparison_df['HuggingFace'] = (comparison_df['HuggingFace'] * 2) - 1
+# Average sentiment by subtopic for all models
+subtopic_comparison = sample_df.groupby('Subtopic')[['TextBlob_Polarity', 'Transformer_Numerical', 'VADER_Sentiment']].mean()
 
 # Plot side by side
 plt.figure(figsize=(12, 8))
-comparison_df.plot(kind='barh', figsize=(12, 8))
-plt.title('Comparison of Sentiment Analysis Methods by Subtopic')
-plt.xlabel('Sentiment Score (-1 = Negative, +1 = Positive)')
-plt.ylabel('Subtopic')
-plt.axvline(x=0, color='gray', linestyle='--')
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.legend(title='Method')
-plt.show()
-```
-
-This chart directly compares how the two sentiment analysis methods evaluate each subtopic. For each subtopic, we see two bars representing the sentiment score from each method. We converted the Hugging Face scores from a 0-1 range to a -1 to +1 range for easier comparison.
-
-This visualization clearly shows where the methods agree and disagree on subtopic sentiment, potentially highlighting areas where one method might be more accurate than the other.
-
-### Examining Sentiment vs. Subjectivity
-
-Let's create a scatter plot that explores the relationship between sentiment polarity and subjectivity across subtopics:
-
-```python
-# Create a scatter plot of all articles with subtopics as colors
-plt.figure(figsize=(12, 8))
-sns.scatterplot(
-    x='Sentiment_Polarity',
-    y='Sentiment_Subjectivity',
-    hue='Subtopic',
-    data=df,
-    alpha=0.7
-)
-plt.title('Sentiment Polarity vs. Subjectivity by Subtopic')
-plt.xlabel('Sentiment Polarity (-1 = Negative, +1 = Positive)')
-plt.ylabel('Subjectivity (0 = Factual, 1 = Opinionated)')
-plt.axvline(x=0, color='gray', linestyle='--')
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.legend(title='Subtopic', bbox_to_anchor=(1.05, 1), loc='upper left')
+subtopic_comparison.plot(kind='bar', width=0.8)
+plt.title('Average Sentiment by Subtopic Across Models')
+plt.xlabel('Subtopic')
+plt.ylabel('Sentiment Score (-1 to 1)')
+plt.axhline(y=0, color='gray', linestyle='--')
+plt.xticks(rotation=45)
+plt.legend(title='Model')
 plt.tight_layout()
 plt.show()
 ```
 
-This scatter plot shows the relationship between sentiment polarity and subjectivity for all articles, colored by subtopic. The x-axis shows sentiment from negative to positive, while the y-axis shows subjectivity from factual to opinionated.
+**What’s Happening?**
 
-This visualization helps us see interesting patterns such as:
+- **`groupby('Subtopic')[...].mean()`**: Averages scores per subtopic for each model.
+- This bar chart is clearer than a scatter plot—each subtopic gets three bars (one per model).
 
-- Whether certain subtopics tend to be more subjective than others
-- If there's a relationship between subjectivity and polarity (e.g., are very positive or very negative articles more likely to be subjective?)
-- How subtopics cluster in the sentiment-subjectivity space
+---
 
+### Interactive Challenge
 
-### Creating Your Own Visual Story
+Your Task: Customize the bar chart by choosing the column name for one model’s scores. Replace `'TextBlob_Polarity'` with a variable you define (e.g., `my_column = 'VADER_Sentiment'`), then rerun the plot.
 
-Now it's your turn to create 1-2 new charts that tell a compelling story about your findings. Here are some ideas:
+(Hint: Pay attention to how the column names match the dataframe!)
 
-1. Create a chart comparing sentiment of different subtopics over time (if your data includes dates)
-2. Design a visualization showing which subtopics have the most disagreement between TextBlob and Hugging Face
-3. Create a chart showing how sentiment relates to other features in your dataset (like article length or source)
+---
 
-When creating your charts, remember these best practices:
+### Step 3: Sentiment Distribution
 
-- Label axes clearly with descriptive titles
-- Add informative chart titles that explain what the visualization shows
-- Choose readable, accessible colors (consider color blindness)
-- Avoid misleading scales that might exaggerate differences
-- Include legends when using multiple colors or shapes
+Let’s see the spread of TextBlob scores.
 
-🧠 **Reflection Prompt**: What story can you tell from your charts? If this was a presentation to your company, what would your headline be? What's the most interesting or surprising insight from your sentiment analysis?
+```python
+# Histogram of TextBlob polarity
+plt.figure(figsize=(10, 6))
+sns.histplot(df['TextBlob_Polarity'], kde=True)
+plt.title('Distribution of TextBlob Sentiment Polarity')
+plt.xlabel('Polarity (-1 = Negative, +1 = Positive)')
+plt.axvline(x=0, color='red', linestyle='--')
+plt.show()
+```
 
-## Final Discussion \& Extensions
+---
 
-Congratulations on completing your sentiment analysis of news articles by subtopic! Let's reflect on what we've learned and consider potential extensions to this project.
+### Reflection Prompt
 
-### Key Takeaways
+Why might the three models disagree on a subtopic’s sentiment?
+(Consider context, emphasis, or how they interpret neutral text.)
 
-Our analysis has revealed several important insights:
+---
 
-1. **Sentiment varies by subtopic**: We found that some news subtopics consistently have more positive or negative coverage than others
-2. **Different methods yield different results**: TextBlob and Hugging Face transformers sometimes disagree, highlighting the complexity of sentiment analysis
-3. **Context matters**: Simple models like TextBlob can miss nuances like sarcasm, while more advanced models might capture them better
-4. **Visualization tells the story**: Charts help us identify patterns and communicate findings effectively
+## Step 7: Final Reflections and Discussion
 
-### Critical Evaluation
+### What You’ve Done
 
-As data scientists, it's important to critically evaluate our methods and results:
+You’ve analyzed news article sentiment with:
 
-**Model Bias**: Do you think the sentiment models are biased? How could we test that?
+1. **TextBlob**: Simple polarity and subjectivity scores.
+2. **Hugging Face Transformers**: Context-aware labels.
+3. **VADER**: Emphasis-sensitive scores.
+You’ve visualized and compared them—amazing work!
 
-- Do they treat all topics fairly?
-- Are certain types of language more likely to be misclassified?
+### Think About It
+
+Which model seemed most reliable? Why?
+Did any subtopic’s sentiment surprise you?
+How could sentiment analysis help in real life—like in finance or marketing?
+
+#### Other Considerations
 
 **Limitations**: What are the limitations of our analysis?
 
@@ -583,17 +547,7 @@ As data scientists, it's important to critically evaluate our methods and result
 - Some topics (like disasters) are inherently negative
 - Other topics (like technology innovations) might be inherently positive
 
-🎁 **Bonus Idea**: Try combining the Title + Description as one input for sentiment analysis. Does it produce different results? Why might title sentiment differ from description sentiment?
-
-### Potential Extensions
-
-If you had more time, here are some interesting ways to extend this project:
-
-1. **Time-based analysis**: Track sentiment by subtopic over time to identify trends or changes
-2. **Named entity recognition**: Identify specific people, companies, or organizations mentioned and analyze sentiment specifically about them
-3. **Advanced models**: Try other pre-trained models from Hugging Face designed for sentiment analysis
-4. **Multi-class sentiment**: Instead of just positive/negative, try classifying text into multiple emotion categories
-5. **Topic modeling**: Use techniques like LDA to automatically discover topics in your articles, then analyze sentiment by topic
+---
 
 ## Final Deliverables
 
@@ -616,26 +570,12 @@ Create compelling visualizations that:
 - Show sentiment differences across subtopics
 - Compare results from different methods
 - Tell a clear story about what you found
-- Are properly labeled and easy to understand
 
+---
 
-### Reflections on Your Results
+### Bonus Ideas
 
-Consider:
+- Try a different Hugging Face model (e.g., one for financial news).
+- Combine Title and Description for sentiment analysis—does it change the results?
 
-- What worked well in your analysis?
-- What challenges did you encounter?
-- What surprised you about the results?
-- How reliable do you think your sentiment analysis is?
-
-
-### Improvements for the Future
-
-Suggest at least one improvement you'd try with more time:
-
-- A different model or approach
-- Additional features to analyze
-- Ways to address the limitations you identified
-- How you might make the analysis more accurate
-
-🧠 **Final Reflection**: What was the most valuable thing you learned from this sentiment analysis project? How might you apply these techniques to other problems or datasets that interest you?
+---
