@@ -121,6 +121,10 @@ What issues might arise if one subtopic has way fewer articles?
 
 ---
 
+### Extra Challenge:
+Use Plotly to create an interactive pie chart displaying the distribution of articles across different subtopics. The chart should display labels and percentages when hovering over each piece of the chart. You'll have to try and research this one yourselves on how to implement it!
+
+
 ## Step 3: Sentiment Analysis with TextBlob (Beginner-Friendly)
 
 ### What You’ll Learn
@@ -461,7 +465,7 @@ print(correlation)
 
 ### Step 2: Improved Visualization
 
-The original scatter plot was tricky to read, so let’s use a bar chart to compare average sentiment per subtopic across models.
+Let’s use a bar chart to compare average sentiment per subtopic across models.
 
 ```python
 # Average sentiment by subtopic for all models
@@ -489,9 +493,11 @@ plt.show()
 
 ### Interactive Challenge
 
-Your Task: Customize the bar chart by choosing the column name for one model’s scores. Replace `'TextBlob_Polarity'` with a variable you define (e.g., `my_column = 'VADER_Sentiment'`), then rerun the plot.
+Create an interactive visualization using a library like Plotly or Bokeh that allows the user to select a subtopic and view the sentiment scores from all three models for that subtopic. There are some great online resources that can guide you on this - feel free to search for some ideas and share your results.
 
-(Hint: Pay attention to how the column names match the dataframe!)
+#### Extension!
+
+Create an interactive 3D scatter plot comparing the sentiment scores from TextBlob, Hugging Face Transformers, and VADER. Allow users to hover over each data point to see the article description.
 
 ---
 
