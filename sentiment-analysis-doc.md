@@ -238,11 +238,27 @@ examples = [
     "The new regulations have devastated small businesses across the country."
 ]
 
+# Try the model on a single example
+test_text = "The new technology is breaking boundaries."
+result = sentiment_model(test_text)
+print(f"Text: '{test_text}'")
+print(f"Result: {result}")
+
+# Compare with TextBlob on our previous examples
+examples = [
+    "The company reported amazing quarterly results, exceeding all expectations.",
+    "The weather today is neither good nor bad.",
+    "The new regulations have devastated small businesses across the country."
+]
+
 for example in examples:
     # Get results from both models
-    hf_result = sentiment_model(example)[^0]  # Hugging Face result
+    hf_result = sentiment_model(example)[0]  # Hugging Face result
     tb_polarity = TextBlob(example).sentiment.polarity  # TextBlob polarity
     
+    print(f"\nText: '{example}'")
+    print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
+    print(f"TextBlob: Polarity = {tb_polarity:.4f}")
     print(f"\nText: '{example}'")
     print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
     print(f"TextBlob: Polarity = {tb_polarity:.4f}")
@@ -267,7 +283,7 @@ print(f"Text: '{sarcastic_example}'")
 print(f"TextBlob: Polarity = {tb_result.polarity:.4f}, Subjectivity = {tb_result.subjectivity:.4f}")
 
 # Hugging Face analysis
-hf_result = sentiment_model(sarcastic_example)[^0]
+hf_result = sentiment_model(sarcastic_example)[0]
 print(f"Hugging Face: {hf_result['label']} (confidence: {hf_result['score']:.4f})")
 ```
 
@@ -288,7 +304,7 @@ df_sample = df.sample(sample_size, random_state=42)
 # Function to get sentiment label and score
 def get_hf_sentiment(text):
     try:
-        result = sentiment_model(str(text))[^0]
+        result = sentiment_model(str(text))[0]
         return result['label'], result['score']
     except Exception as e:
         print(f"Error processing text: {e}")
@@ -333,8 +349,8 @@ plt.show()
 
 # Calculate agreement percentage between the two models
 agreement = (
-    ((df_sample['Sentiment_Polarity'] &gt; 0) &amp; (df_sample['HF_Sentiment_Label'] == 'POSITIVE')) |
-    ((df_sample['Sentiment_Polarity'] &lt; 0) &amp; (df_sample['HF_Sentiment_Label'] == 'NEGATIVE'))
+    ((df_sample['Sentiment_Polarity'] > 0) & (df_sample['HF_Sentiment_Label'] == 'POSITIVE')) |
+    ((df_sample['Sentiment_Polarity'] < 0) & (df_sample['HF_Sentiment_Label'] == 'NEGATIVE'))
 ).mean() * 100
 
 print(f"Agreement between TextBlob and Hugging Face: {agreement:.2f}%")
@@ -426,7 +442,7 @@ Let's perform a similar analysis using our Hugging Face results:
 ```python
 # For this to work, we need to have applied the Hugging Face model to our dataset
 # Group by subtopic and calculate percentage of positive articles
-hf_sentiment_by_subtopic = df_sample.groupby('Subtopic')['HF_Numeric'].mean().sort_values() * 100
+hf_sentiment_by_subtopic = df_sample.groupby('Subtopic')['HF_Sentiment_Numeric'].mean().sort_values() * 100
 
 # Create a bar chart
 plt.figure(figsize=(10, 6))
@@ -457,7 +473,7 @@ Let's create a chart that directly compares how the two models evaluate each sub
 tb_by_subtopic = df_sample.groupby('Subtopic')['Sentiment_Polarity'].mean()
 
 # Calculate percentage positive for Hugging Face per subtopic
-hf_by_subtopic = df_sample.groupby('Subtopic')['HF_Numeric'].mean()
+hf_by_subtopic = df_sample.groupby('Subtopic')['HF_Sentiment_Numeric'].mean()
 
 # Combine into a single dataframe for plotting
 comparison_df = pd.DataFrame({
